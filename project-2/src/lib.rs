@@ -4,5 +4,7 @@
 pub use error::KvsError;
 pub use kvs::{KvStore, Result};
 
-mod error;
-mod kvs;
+/// error
+pub mod error;
+/// kvs
+pub mod kvs;
