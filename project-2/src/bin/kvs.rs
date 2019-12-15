@@ -25,18 +25,24 @@ fn main() -> Result<()> {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let value = matches.value_of("VALUE").expect("VALUE argument missing");
             let mut store = KvStore::open(current_dir()?)?;
-            store.set(key.to_string(), value.to_string());
+            if let Err(e) = store.set(key.to_string(), value.to_string()) {
+                return Err(e);
+            }
         }
         ("get", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
-            let store = KvStore::open(current_dir()?)?;
-            if let Some(value) = store.get(key.to_string())? {
-                println!("{}", value);
-            } else {
-                println!("Key not found");
+            let mut store = KvStore::open(current_dir()?)?;
+            match store.get(key.to_string()) {
+                Ok(Some(value)) => {
+                    println!("{}", value);
+                }
+                Ok(None) => {
+                    println!("Key not found");
+                }
+                Err(e) => return Err(e),
             }
         }
-        ("rm", Some(_matches)) => {
+        ("rm", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let mut store = KvStore::open(current_dir()?)?;
             match store.remove(key.to_string()) {

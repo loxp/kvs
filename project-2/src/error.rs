@@ -10,10 +10,25 @@ pub enum KvsError {
     /// IO error
     #[fail(display = "{}", _0)]
     Io(#[cause] io::Error),
+    /// File not found error
+    #[fail(display = "File not found")]
+    FileNotFound,
+    /// Serde json error
+    #[fail(display = "{}", _0)]
+    SerdeJson(#[cause] serde_json::Error),
+    /// Internel error
+    #[fail(display = "Internal error")]
+    InternalError,
 }
 
 impl From<io::Error> for KvsError {
     fn from(err: io::Error) -> KvsError {
         KvsError::Io(err)
+    }
+}
+
+impl From<serde_json::error::Error> for KvsError {
+    fn from(err: serde_json::error::Error) -> KvsError {
+        KvsError::SerdeJson(err)
     }
 }
