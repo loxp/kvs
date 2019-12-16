@@ -5,10 +5,9 @@ use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsStr;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
 use std::mem;
-use std::sync::atomic::AtomicU64;
-use failure::_core::sync::atomic::Ordering;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 const DEFAULT_FILE_CAPACITY: u64 = 8192;
 const DEFAULT_COMPACT_COUNT: u64 = 1000;
@@ -73,7 +72,11 @@ impl KvStore {
         Self::load(&mut file_store, &mut index)?;
         Self::compact(&mut file_store, &mut index)?;
 
-        Ok(Self { file_store, index, compact_counter })
+        Ok(Self {
+            file_store,
+            index,
+            compact_counter,
+        })
     }
 
     /// set a key value pair
@@ -82,7 +85,11 @@ impl KvStore {
         let cmd_pos = self.file_store.write_command(cmd)?;
         self.index.insert(key, cmd_pos);
         self.compact_counter.fetch_add(1, Ordering::Relaxed);
-        if DEFAULT_COMPACT_COUNT == self.compact_counter.compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst) {
+        if DEFAULT_COMPACT_COUNT
+            == self
+            .compact_counter
+            .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+        {
             Self::compact(&mut self.file_store, &mut self.index)?;
         }
         Ok(())
@@ -110,7 +117,11 @@ impl KvStore {
         let _cmd_pos = self.file_store.write_command(cmd)?;
         self.index.remove(&key);
         self.compact_counter.fetch_add(1, Ordering::Relaxed);
-        if DEFAULT_COMPACT_COUNT == self.compact_counter.compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst) {
+        if DEFAULT_COMPACT_COUNT
+            == self
+            .compact_counter
+            .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+        {
             Self::compact(&mut self.file_store, &mut self.index)?;
         }
         Ok(())
@@ -120,10 +131,9 @@ impl KvStore {
         file_store: &mut FileStore,
         index: &mut BTreeMap<String, CommandPosition>,
     ) -> Result<()> {
+        let start_file_num = file_store.current_file_num + 1 - file_store.read_logs.len() as u64;
 
-        let start_file_num = file_store.current_file_num+1 - file_store.read_logs.len() as u64;
-
-        for i in start_file_num..file_store.current_file_num+1 {
+        for i in start_file_num..file_store.current_file_num + 1 {
             let reader = file_store.read_logs.get_mut(&(i as u64));
             if reader.is_none() {
                 continue;
@@ -154,11 +164,15 @@ impl KvStore {
     }
 
     // compact the file and update the index
-    fn compact(file_store: &mut FileStore, index: &mut BTreeMap<String, CommandPosition>) -> Result<()> {
-        let mut read_logs_new: HashMap<u64, WalReader<File>> = HashMap::with_capacity(file_store.read_logs.len());
+    fn compact(
+        file_store: &mut FileStore,
+        index: &mut BTreeMap<String, CommandPosition>,
+    ) -> Result<()> {
+        let mut read_logs_new: HashMap<u64, WalReader<File>> =
+            HashMap::with_capacity(file_store.read_logs.len());
 
         // do not compact the current log
-        let start_file_num = file_store.current_file_num+1 - file_store.read_logs.len() as u64;
+        let start_file_num = file_store.current_file_num + 1 - file_store.read_logs.len() as u64;
         for i in start_file_num..file_store.current_file_num {
             let reader = file_store.read_logs.get_mut(&(i as u64));
             if reader.is_none() {
@@ -178,7 +192,11 @@ impl KvStore {
                 let cmd = cmd?;
                 let key_ref = cmd.get_key();
                 if let Some(position_in_index) = index.get(key_ref) {
-                    let &CommandPosition { file_num: current_position_file_num, pos: current_position_offset, .. } = position_in_index;
+                    let &CommandPosition {
+                        file_num: current_position_file_num,
+                        pos: current_position_offset,
+                        ..
+                    } = position_in_index;
                     if current_position_file_num != i as u64 || current_position_offset != pos {
                         // this is an out of date command, and need to be dropped,
                         // do nothing to let it drop
@@ -188,7 +206,11 @@ impl KvStore {
                         let cmd_to_write = serde_json::to_vec(&cmd)?;
                         let cmd_pos_len = writer_new.write(&cmd_to_write)?;
                         writer_new.flush()?;
-                        let cmd_pos_new = CommandPosition { file_num: i as u64, pos: position_new, len: cmd_pos_len as u64 };
+                        let cmd_pos_new = CommandPosition {
+                            file_num: i as u64,
+                            pos: position_new,
+                            len: cmd_pos_len as u64,
+                        };
                         index.insert(key_ref.to_string(), cmd_pos_new);
                         position_new += cmd_pos_len as u64;
                     }
@@ -211,7 +233,10 @@ impl KvStore {
         }
 
         // move the current read log to the new read logs
-        let (current_file_num, last_read_log) = file_store.read_logs.remove_entry(&file_store.current_file_num).unwrap();
+        let (current_file_num, last_read_log) = file_store
+            .read_logs
+            .remove_entry(&file_store.current_file_num)
+            .unwrap();
         mem::replace(&mut file_store.read_logs, read_logs_new);
         file_store.read_logs.insert(current_file_num, last_read_log);
 
@@ -334,9 +359,14 @@ impl FileStore {
     }
 
     fn is_wal_file(path: &Path) -> bool {
-        path.is_file() &&
-            path.file_stem().unwrap().to_str().unwrap().starts_with("kvs_") &&
-            path.extension().unwrap().to_str().unwrap() == "wal"
+        path.is_file()
+            && path
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("kvs_")
+            && path.extension().unwrap().to_str().unwrap() == "wal"
     }
 
     fn wal_path(path: &Path, file_number: u64) -> PathBuf {
@@ -425,8 +455,8 @@ impl Command {
     /// get the key of command
     pub fn get_key(&self) -> &String {
         match self {
-            Command::Set { key, .. } => { &key }
-            Command::Del { key } => { &key }
+            Command::Set { key, .. } => &key,
+            Command::Del { key } => &key,
         }
     }
 }

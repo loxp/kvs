@@ -1,8 +1,8 @@
 #![deny(missing_docs)]
 //! A simple key/value store.
 
+pub use crate::kvs::{KvStore, Result};
 pub use error::KvsError;
-pub use kvs::{KvStore, Result};
 
 /// error
 pub mod error;
