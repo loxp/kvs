@@ -87,8 +87,8 @@ impl KvStore {
         self.compact_counter.fetch_add(1, Ordering::Relaxed);
         if DEFAULT_COMPACT_COUNT
             == self
-            .compact_counter
-            .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+                .compact_counter
+                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
         {
             Self::compact(&mut self.file_store, &mut self.index)?;
         }
@@ -119,8 +119,8 @@ impl KvStore {
         self.compact_counter.fetch_add(1, Ordering::Relaxed);
         if DEFAULT_COMPACT_COUNT
             == self
-            .compact_counter
-            .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+                .compact_counter
+                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
         {
             Self::compact(&mut self.file_store, &mut self.index)?;
         }
@@ -361,11 +361,11 @@ impl FileStore {
     fn is_wal_file(path: &Path) -> bool {
         path.is_file()
             && path
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .starts_with("kvs_")
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .starts_with("kvs_")
             && path.extension().unwrap().to_str().unwrap() == "wal"
     }
 
