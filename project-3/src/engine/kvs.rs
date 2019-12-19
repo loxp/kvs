@@ -1,4 +1,5 @@
-use crate::KvsError;
+use crate::engine::KvsEngine;
+use crate::{KvsError, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Deserializer;
 use std::collections::{BTreeMap, HashMap};
@@ -60,9 +61,6 @@ struct CommandPosition {
     pub len: u64,
 }
 
-/// Result type for kvs
-pub type Result<T> = std::result::Result<T, KvsError>;
-
 impl KvStore {
     /// open and create KvStore
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
@@ -77,54 +75,6 @@ impl KvStore {
             index,
             compact_counter,
         })
-    }
-
-    /// set a key value pair
-    pub fn set(&mut self, key: String, value: String) -> Result<()> {
-        let cmd = Command::set(key.clone(), value);
-        let cmd_pos = self.file_store.write_command(cmd)?;
-        self.index.insert(key, cmd_pos);
-        self.compact_counter.fetch_add(1, Ordering::Relaxed);
-        if DEFAULT_COMPACT_COUNT
-            == self
-                .compact_counter
-                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
-        {
-            Self::compact(&mut self.file_store, &mut self.index)?;
-        }
-        Ok(())
-    }
-
-    /// get value by key
-    pub fn get(&mut self, key: String) -> Result<Option<String>> {
-        let cmd_pos = self.index.get(&key);
-        if let None = cmd_pos {
-            return Ok(None);
-        }
-        let cmd = self.file_store.read_command_position(cmd_pos.unwrap())?;
-        match cmd {
-            Command::Set { key: _, value: v } => Ok(Some(v)),
-            _ => Err(KvsError::InternalError),
-        }
-    }
-
-    /// remove a key value pair by key
-    pub fn remove(&mut self, key: String) -> Result<()> {
-        if let None = self.index.get(&key) {
-            return Err(KvsError::KeyNotFound);
-        }
-        let cmd = Command::del(key.clone());
-        let _cmd_pos = self.file_store.write_command(cmd)?;
-        self.index.remove(&key);
-        self.compact_counter.fetch_add(1, Ordering::Relaxed);
-        if DEFAULT_COMPACT_COUNT
-            == self
-                .compact_counter
-                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
-        {
-            Self::compact(&mut self.file_store, &mut self.index)?;
-        }
-        Ok(())
     }
 
     fn load(
@@ -240,6 +190,53 @@ impl KvStore {
         mem::replace(&mut file_store.read_logs, read_logs_new);
         file_store.read_logs.insert(current_file_num, last_read_log);
 
+        Ok(())
+    }
+}
+
+impl KvsEngine for KvStore {
+    fn set(&mut self, key: String, value: String) -> Result<()> {
+        let cmd = Command::set(key.clone(), value);
+        let cmd_pos = self.file_store.write_command(cmd)?;
+        self.index.insert(key, cmd_pos);
+        self.compact_counter.fetch_add(1, Ordering::Relaxed);
+        if DEFAULT_COMPACT_COUNT
+            == self
+                .compact_counter
+                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+        {
+            Self::compact(&mut self.file_store, &mut self.index)?;
+        }
+        Ok(())
+    }
+
+    fn get(&mut self, key: String) -> Result<Option<String>> {
+        let cmd_pos = self.index.get(&key);
+        if let None = cmd_pos {
+            return Ok(None);
+        }
+        let cmd = self.file_store.read_command_position(cmd_pos.unwrap())?;
+        match cmd {
+            Command::Set { key: _, value: v } => Ok(Some(v)),
+            _ => Err(KvsError::InternalError),
+        }
+    }
+
+    fn remove(&mut self, key: String) -> Result<()> {
+        if let None = self.index.get(&key) {
+            return Err(KvsError::KeyNotFound);
+        }
+        let cmd = Command::del(key.clone());
+        let _cmd_pos = self.file_store.write_command(cmd)?;
+        self.index.remove(&key);
+        self.compact_counter.fetch_add(1, Ordering::Relaxed);
+        if DEFAULT_COMPACT_COUNT
+            == self
+                .compact_counter
+                .compare_and_swap(DEFAULT_COMPACT_COUNT, 0, Ordering::SeqCst)
+        {
+            Self::compact(&mut self.file_store, &mut self.index)?;
+        }
         Ok(())
     }
 }

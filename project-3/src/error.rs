@@ -19,6 +19,9 @@ pub enum KvsError {
     /// Internel error
     #[fail(display = "Internal error")]
     InternalError,
+    /// Command line argument error
+    #[fail(display = "Command line argument error")]
+    CommandLineArgumentError,
 }
 
 impl From<io::Error> for KvsError {
