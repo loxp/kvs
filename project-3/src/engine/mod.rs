@@ -1,5 +1,5 @@
-use crate::model::Result;
 use crate::error::KvsError::InternalError;
+use crate::model::Result;
 use std::path::{Path, PathBuf};
 
 mod kvs;

@@ -6,6 +6,8 @@ pub use error::KvsError;
 pub use model::Result;
 pub use server::KvsServer;
 
+/// encoding / decoding implementation of kvs
+pub mod codec;
 mod engine;
 mod error;
 mod model;
