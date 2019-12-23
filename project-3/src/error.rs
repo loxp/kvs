@@ -22,6 +22,9 @@ pub enum KvsError {
     /// Command line argument error
     #[fail(display = "Command line argument error")]
     CommandLineArgumentError,
+    /// Invalid server response
+    #[fail(display = "Invalid server response")]
+    InvalidServerResponse,
 }
 
 impl From<io::Error> for KvsError {

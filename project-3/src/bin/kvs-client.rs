@@ -1,5 +1,5 @@
 use clap::{App, AppSettings, Arg, SubCommand};
-use kvs::{KvsError, Result};
+use kvs::{KvsClient, KvsError, Result};
 use std::env::current_dir;
 use std::process::exit;
 
@@ -27,16 +27,30 @@ fn main() -> Result<()> {
         .subcommand(SubCommand::with_name("rm").arg(Arg::with_name("KEY").required(true)))
         .get_matches();
 
+    let addr = matches
+        .value_of("ADDR")
+        .ok_or(KvsError::CommandLineArgumentError)?;
+
     match matches.subcommand() {
         ("set", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let value = matches.value_of("VALUE").expect("VALUE argument missing");
+            let mut client = KvsClient::new(addr.to_string())?;
+            client.set(key.to_string(), value.to_string())?;
         }
         ("get", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
+            let mut client = KvsClient::new(addr.to_string())?;
+            let ret = client.get(key.to_string());
+            match ret {
+                Ok(r) => println!("{:?}", r),
+                Err(e) => println!("{:?}", e),
+            }
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
+            let mut client = KvsClient::new(addr.to_string())?;
+            client.remove(key.to_string())?;
         }
         _ => unreachable!(),
     }
