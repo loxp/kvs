@@ -2,6 +2,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use kvs::{KvsClient, KvsError, Result};
 use std::env::current_dir;
 use std::process::exit;
+use std::net::TcpStream;
 
 fn main() -> Result<()> {
     let matches = App::new(env!("CARGO_PKG_NAME"))
@@ -35,12 +36,14 @@ fn main() -> Result<()> {
         ("set", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let value = matches.value_of("VALUE").expect("VALUE argument missing");
-            let mut client = KvsClient::new(addr.to_string())?;
+            let stream = TcpStream::connect(addr.to_string())?;
+            let mut client = KvsClient::new(&stream)?;
             client.set(key.to_string(), value.to_string())?;
         }
         ("get", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
-            let mut client = KvsClient::new(addr.to_string())?;
+            let stream = TcpStream::connect(addr.to_string())?;
+            let mut client = KvsClient::new(&stream)?;
             let ret = client.get(key.to_string());
             match ret {
                 Ok(r) => println!("{:?}", r),
@@ -49,7 +52,8 @@ fn main() -> Result<()> {
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
-            let mut client = KvsClient::new(addr.to_string())?;
+            let stream = TcpStream::connect(addr.to_string())?;
+            let mut client = KvsClient::new(&stream)?;
             client.remove(key.to_string())?;
         }
         _ => unreachable!(),
