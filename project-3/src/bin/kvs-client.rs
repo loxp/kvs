@@ -1,8 +1,8 @@
 use clap::{App, AppSettings, Arg, SubCommand};
 use kvs::{KvsClient, KvsError, Result};
 use std::env::current_dir;
-use std::process::exit;
 use std::net::TcpStream;
+use std::process::exit;
 
 fn main() -> Result<()> {
     let matches = App::new(env!("CARGO_PKG_NAME"))

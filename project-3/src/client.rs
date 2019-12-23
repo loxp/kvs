@@ -1,7 +1,7 @@
-use crate::codec::{encode, Message, decode};
+use crate::codec::{decode, encode, Message};
 use crate::error::KvsError::InternalError;
 use crate::{KvsError, Result};
-use std::io::{Read, Write, BufReader, BufWriter, BufRead};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::net::TcpStream;
 
 /// client of kvs

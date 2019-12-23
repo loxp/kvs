@@ -25,6 +25,9 @@ pub enum KvsError {
     /// Invalid server response
     #[fail(display = "Invalid server response")]
     InvalidServerResponse,
+    /// Invalid request
+    #[fail(display = "Invalid request")]
+    InvalidRequest,
 }
 
 impl From<io::Error> for KvsError {
