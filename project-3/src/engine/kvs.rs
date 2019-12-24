@@ -10,7 +10,7 @@ use std::mem;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-const DEFAULT_FILE_CAPACITY: u64 = 64 * 1024 * 1024;
+const DEFAULT_FILE_CAPACITY: u64 = 1024 * 1024;
 const DEFAULT_COMPACT_COUNT: u64 = 1000;
 
 /// key value store
