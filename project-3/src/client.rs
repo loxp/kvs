@@ -52,7 +52,8 @@ impl<'a> KvsClient<'a> {
         match ret {
             Some(msg) => match msg.as_str() {
                 "OK" => Ok(()),
-                r => Err(KvsError::InvalidServerResponse),
+                // TODO: deserilize error from string
+                r => Err(KvsError::KeyNotFound),
             },
             None => Err(KvsError::InvalidServerResponse),
         }

@@ -71,7 +71,11 @@ fn main() -> Result<()> {
             let addr = matches.value_of("addr").expect("ADDR argument missing");
             let stream = TcpStream::connect(addr.to_string())?;
             let mut client = KvsClient::new(&stream)?;
-            client.remove(key.to_string())?;
+            let ret = client.remove(key.to_string());
+            if let Err(e) = ret {
+                eprint!("{}", e);
+                exit(1);
+            }
         }
         _ => unreachable!(),
     }

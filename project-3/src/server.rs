@@ -88,9 +88,17 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
             }
             "rm" => {
                 let key = msg.get(1).ok_or(KvsError::InvalidRequest)?;
-                engine.lock().unwrap().remove(key.to_string())?;
-                writer.write("OK\n".as_bytes())?;
-                writer.flush()?;
+                let ret = engine.lock().unwrap().remove(key.to_string());
+                match ret {
+                    Ok(()) => {
+                        writer.write("OK\n".as_bytes())?;
+                        writer.flush()?;
+                    },
+                    Err(e) => {
+                        writer.write(format!("{}\n", e).as_bytes())?;
+                        writer.flush()?;
+                    }
+                }
             }
             _ => {
                 let err_resp = format!("{}\n", KvsError::InvalidRequest);
