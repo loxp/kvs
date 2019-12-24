@@ -7,7 +7,7 @@ mod kvs;
 pub use kvs::KvStore;
 
 /// Store engine abstraction of kvs
-pub trait KvsEngine {
+pub trait KvsEngine: Send + Sync {
     /// Set a key value pair.
     /// If set success, then return Ok(()),
     /// Return Err(e) when error occurs.

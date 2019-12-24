@@ -2,17 +2,19 @@ use crate::codec;
 use crate::{KvsEngine, KvsError, Result};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 /// Network Server of kvs
-pub struct KvsServer<K: KvsEngine + Sync> {
+pub struct KvsServer<K: KvsEngine> {
     addr: String,
-    engine: K,
+    engine: Arc<Mutex<K>>,
 }
 
-impl<K: KvsEngine + Sync> KvsServer<K> {
+impl<K: KvsEngine + 'static> KvsServer<K> {
     /// Constructor of KvsServer
     pub fn new(addr: String, engine: K) -> Result<Self> {
+        let engine = Arc::new(Mutex::new(engine));
         let server = KvsServer { addr, engine };
         Ok(server)
     }
@@ -23,7 +25,8 @@ impl<K: KvsEngine + Sync> KvsServer<K> {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    thread::spawn(|| handle_stream(stream, self.engine));
+                    let engine = self.engine.clone();
+                    thread::spawn(move || handle_stream(stream, engine));
                 }
                 Err(e) => {
                     println!("connection failed: {:?}", e);
@@ -35,7 +38,7 @@ impl<K: KvsEngine + Sync> KvsServer<K> {
     }
 }
 
-pub fn handle_stream<K: KvsEngine>(stream: TcpStream, mut engine: K) -> Result<()> {
+pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> Result<()> {
     let mut reader = BufReader::new(&stream);
     let mut writer = BufWriter::new(&stream);
     loop {
@@ -52,7 +55,7 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, mut engine: K) -> Result<(
         match msg.get(0).ok_or(KvsError::InvalidRequest)?.as_ref() {
             "get" => {
                 let key = msg.get(1).ok_or(KvsError::InvalidRequest)?;
-                let value = engine.get(key.to_string())?;
+                let value = engine.lock().unwrap().get(key.to_string())?;
                 match value {
                     Some(v) => {
                         let resp = format!("{:?}\n", v);
@@ -67,15 +70,18 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, mut engine: K) -> Result<(
             "set" => {
                 let key = msg.get(1).ok_or(KvsError::InvalidRequest)?;
                 let value = msg.get(2).ok_or(KvsError::InvalidRequest)?;
-                engine.set(key.to_string(), value.to_string())?;
+                engine
+                    .lock()
+                    .unwrap()
+                    .set(key.to_string(), value.to_string())?;
             }
             "rm" => {
                 let key = msg.get(1).ok_or(KvsError::InvalidRequest)?;
-                engine.remove(key.to_string())?;
+                engine.lock().unwrap().remove(key.to_string())?;
             }
             _ => {
-                let err_resp = format!("{:?}\n", KvsError::InvalidRequest).as_bytes();
-                writer.write(err_resp)?;
+                let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
+                writer.write(err_resp.as_bytes())?;
             }
         }
     }
