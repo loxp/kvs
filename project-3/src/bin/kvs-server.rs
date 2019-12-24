@@ -30,10 +30,10 @@ fn main() -> Result<()> {
 
     let addr = matches
         .value_of("addr")
-        .ok_or(KvsError::CommandLineArgumentError)?;
+        .expect("ADDR argument missing");
     let engine_name = matches
         .value_of("engine")
-        .ok_or(KvsError::CommandLineArgumentError)?;
+        .expect("ENGINE argument missing");
 
     let dir = current_dir()?;
 

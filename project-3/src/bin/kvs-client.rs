@@ -12,36 +12,50 @@ fn main() -> Result<()> {
         .setting(AppSettings::DisableHelpSubcommand)
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
-        .arg(
-            Arg::with_name("addr")
-                .long("addr")
-                .value_name("ADDR")
-                .help("server address")
-                .default_value("127.0.0.1:4000"),
-        )
         .subcommand(
             SubCommand::with_name("set")
                 .arg(Arg::with_name("KEY").required(true))
-                .arg(Arg::with_name("VALUE").required(true)),
+                .arg(Arg::with_name("VALUE").required(true))
+                .arg(
+                    Arg::with_name("addr")
+                        .long("addr")
+                        .value_name("ADDR")
+                        .help("server address")
+                        .default_value("127.0.0.1:4000"),
+                ),
         )
-        .subcommand(SubCommand::with_name("get").arg(Arg::with_name("KEY").required(true)))
-        .subcommand(SubCommand::with_name("rm").arg(Arg::with_name("KEY").required(true)))
-        .get_matches();
+        .subcommand(SubCommand::with_name("get").arg(Arg::with_name("KEY").required(true))
+            .arg(
+                Arg::with_name("addr")
+                    .long("addr")
+                    .value_name("ADDR")
+                    .help("server address")
+                    .default_value("127.0.0.1:4000"),
+            )
+        )
+        .subcommand(SubCommand::with_name("rm").arg(Arg::with_name("KEY").required(true))
+            .arg(
+                Arg::with_name("addr")
+                    .long("addr")
+                    .value_name("ADDR")
+                    .help("server address")
+                    .default_value("127.0.0.1:4000"),
+            ))
 
-    let addr = matches
-        .value_of("addr")
-        .ok_or(KvsError::CommandLineArgumentError)?;
+        .get_matches();
 
     match matches.subcommand() {
         ("set", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let value = matches.value_of("VALUE").expect("VALUE argument missing");
+            let addr = matches.value_of("addr").expect("ADDR argument missing");
             let stream = TcpStream::connect(addr.to_string())?;
             let mut client = KvsClient::new(&stream)?;
             client.set(key.to_string(), value.to_string())?;
         }
         ("get", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
+            let addr = matches.value_of("addr").expect("ADDR argument missing");
             let stream = TcpStream::connect(addr.to_string())?;
             let mut client = KvsClient::new(&stream)?;
             let ret = client.get(key.to_string())?;
@@ -54,6 +68,7 @@ fn main() -> Result<()> {
         }
         ("rm", Some(matches)) => {
             let key = matches.value_of("KEY").expect("KEY argument missing");
+            let addr = matches.value_of("addr").expect("ADDR argument missing");
             let stream = TcpStream::connect(addr.to_string())?;
             let mut client = KvsClient::new(&stream)?;
             client.remove(key.to_string())?;
