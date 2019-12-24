@@ -10,7 +10,6 @@ fn main() -> Result<()> {
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .setting(AppSettings::DisableHelpSubcommand)
-        .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
         .arg(
             Arg::with_name("addr")
@@ -29,10 +28,10 @@ fn main() -> Result<()> {
         .get_matches();
 
     let addr = matches
-        .value_of("ADDR")
+        .value_of("addr")
         .ok_or(KvsError::CommandLineArgumentError)?;
     let engine_name = matches
-        .value_of("ENGINE")
+        .value_of("engine")
         .ok_or(KvsError::CommandLineArgumentError)?;
 
     let dir = current_dir()?;
