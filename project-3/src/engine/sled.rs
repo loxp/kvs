@@ -24,10 +24,10 @@ impl SledKvsEngine {
 
 impl KvsEngine for SledKvsEngine {
     fn set(&mut self, key: String, value: String) -> Result<()> {
-        let ret = self
-            .db
+        self.db
             .insert(key.as_bytes(), value.as_bytes())
             .map_err(|_| KvsError::InternalError)?;
+        self.db.flush().map_err(|_| KvsError::InternalError)?;
         Ok(())
     }
 
@@ -44,6 +44,7 @@ impl KvsEngine for SledKvsEngine {
 
     fn remove(&mut self, key: String) -> Result<()> {
         let ret = self.db.remove(key).map_err(|_| KvsError::InternalError)?;
+        self.db.flush().map_err(|_| KvsError::InternalError)?;
         match ret {
             Some(_) => Ok(()),
             None => Err(KvsError::KeyNotFound),
