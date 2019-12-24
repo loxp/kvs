@@ -80,17 +80,3 @@ impl EngineType {
         Ok(contents)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{build_engine, EngineType, EngineType::Kvs};
-    use std::path::PathBuf;
-    use tempfile::TempDir;
-
-    #[test]
-    fn test_build_engine() {
-        let temp_dir = TempDir::new().expect("unable to create temporary working directory");
-        let engine_type = EngineType::Kvs(temp_dir.into_path());
-        let engine = build_engine(engine_type);
-    }
-}
