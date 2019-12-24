@@ -14,6 +14,7 @@ pub struct KvsServer<K: KvsEngine> {
 impl<K: KvsEngine + 'static> KvsServer<K> {
     /// Constructor of KvsServer
     pub fn new(addr: String, engine: K) -> Result<Self> {
+        eprintln!("kvs server {}, listening on {}", env!("CARGO_PKG_VERSION"), addr.clone());
         let engine = Arc::new(Mutex::new(engine));
         let server = KvsServer { addr, engine };
         Ok(server)
