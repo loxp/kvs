@@ -61,11 +61,12 @@ impl<'a> KvsClient<'a> {
     fn write_request_and_get_result(&mut self, msg: Message) -> Result<Option<String>> {
         let write_line = encode(msg);
         self.writer.write_fmt(format_args!("{:?}\n", write_line))?;
+        self.writer.flush()?;
         let mut read_line = String::new();
         let len = self.reader.read_line(&mut read_line)?;
         match len {
             0 => Ok(None),
-            _ => Ok(Some(read_line)),
+            _ => Ok(Some(read_line.trim().to_string())),
         }
     }
 }

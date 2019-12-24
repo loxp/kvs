@@ -44,11 +44,12 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
     loop {
         let mut read_line = String::new();
         reader.read_line(&mut read_line)?;
-        let msg = codec::decode(read_line)?;
+        let msg = codec::decode(read_line.trim().to_string())?;
 
         if msg.len() <= 1 {
             let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
             writer.write(err_resp.as_bytes())?;
+            writer.flush();
             continue;
         }
 
@@ -60,10 +61,12 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
                     Some(v) => {
                         let resp = format!("{:?}\n", v);
                         writer.write(resp.as_bytes())?;
+                        writer.flush();
                     }
                     None => {
                         let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
                         writer.write(err_resp.as_bytes())?;
+                        writer.flush();
                     }
                 }
             }
@@ -82,6 +85,7 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
             _ => {
                 let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
                 writer.write(err_resp.as_bytes())?;
+                writer.flush();
             }
         }
     }
