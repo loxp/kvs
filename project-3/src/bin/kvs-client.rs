@@ -24,24 +24,28 @@ fn main() -> Result<()> {
                         .default_value("127.0.0.1:4000"),
                 ),
         )
-        .subcommand(SubCommand::with_name("get").arg(Arg::with_name("KEY").required(true))
-            .arg(
-                Arg::with_name("addr")
-                    .long("addr")
-                    .value_name("ADDR")
-                    .help("server address")
-                    .default_value("127.0.0.1:4000"),
-            )
+        .subcommand(
+            SubCommand::with_name("get")
+                .arg(Arg::with_name("KEY").required(true))
+                .arg(
+                    Arg::with_name("addr")
+                        .long("addr")
+                        .value_name("ADDR")
+                        .help("server address")
+                        .default_value("127.0.0.1:4000"),
+                ),
         )
-        .subcommand(SubCommand::with_name("rm").arg(Arg::with_name("KEY").required(true))
-            .arg(
-                Arg::with_name("addr")
-                    .long("addr")
-                    .value_name("ADDR")
-                    .help("server address")
-                    .default_value("127.0.0.1:4000"),
-            ))
-
+        .subcommand(
+            SubCommand::with_name("rm")
+                .arg(Arg::with_name("KEY").required(true))
+                .arg(
+                    Arg::with_name("addr")
+                        .long("addr")
+                        .value_name("ADDR")
+                        .help("server address")
+                        .default_value("127.0.0.1:4000"),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand() {

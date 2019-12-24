@@ -1,6 +1,6 @@
 use clap::{App, AppSettings, Arg, SubCommand};
-use kvs::{KvsError, KvsServer, Result};
 use kvs::engine::{EngineType, KvStore, SledKvsEngine};
+use kvs::{KvsError, KvsServer, Result};
 use std::env::current_dir;
 use std::path::PathBuf;
 use std::process::exit;
@@ -28,12 +28,8 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let addr = matches
-        .value_of("addr")
-        .expect("ADDR argument missing");
-    let engine_name = matches
-        .value_of("engine")
-        .expect("ENGINE argument missing");
+    let addr = matches.value_of("addr").expect("ADDR argument missing");
+    let engine_name = matches.value_of("engine").expect("ENGINE argument missing");
 
     let dir = current_dir()?;
 

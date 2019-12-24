@@ -93,7 +93,7 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
                     Ok(()) => {
                         writer.write("OK\n".as_bytes())?;
                         writer.flush()?;
-                    },
+                    }
                     Err(e) => {
                         writer.write(format!("{}\n", e).as_bytes())?;
                         writer.flush()?;
