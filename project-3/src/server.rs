@@ -1,5 +1,4 @@
-use crate::codec;
-use crate::{KvsEngine, KvsError, Result};
+use crate::{codec, engine, EngineType, KvStore, KvsEngine, KvsError, Result, SledKvsEngine};
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -14,7 +13,6 @@ pub struct KvsServer<K: KvsEngine> {
 impl<K: KvsEngine + 'static> KvsServer<K> {
     /// Constructor of KvsServer
     pub fn new(addr: String, engine: K) -> Result<Self> {
-        eprintln!("kvs server {}, listening on {}", env!("CARGO_PKG_VERSION"), addr.clone());
         let engine = Arc::new(Mutex::new(engine));
         let server = KvsServer { addr, engine };
         Ok(server)
@@ -23,6 +21,13 @@ impl<K: KvsEngine + 'static> KvsServer<K> {
     /// Run the KvsServer
     pub fn run(&self) -> Result<()> {
         let listener = TcpListener::bind(self.addr.clone())?;
+
+        eprintln!(
+            "kvs server {}, listening on {}, start success!",
+            env!("CARGO_PKG_VERSION"),
+            self.addr.clone()
+        );
+
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {

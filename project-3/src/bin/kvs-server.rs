@@ -1,5 +1,6 @@
 use clap::{App, AppSettings, Arg, SubCommand};
-use kvs::{EngineType, KvStore, KvsError, KvsServer, Result};
+use kvs::{KvsError, KvsServer, Result};
+use kvs::engine::{EngineType, KvStore, SledKvsEngine};
 use std::env::current_dir;
 use std::path::PathBuf;
 use std::process::exit;
@@ -38,11 +39,22 @@ fn main() -> Result<()> {
 
     let engine_type = match engine_name {
         "kvs" => Ok(EngineType::Kvs(dir)),
-        _ => Err(KvsError::CommandLineArgumentError),
+        "sled" => Ok(EngineType::Sled(dir)),
+        _ => Err(KvsError::InvalidStorageEngineType),
     }?;
-    let store_engine = kvs::build_engine(engine_type)?;
-    let server = KvsServer::new(addr.to_string(), store_engine)?;
-    server.run()?;
 
-    Ok(())
+    engine_type.check()?;
+
+    match engine_type {
+        EngineType::Kvs(path) => {
+            let engine = KvStore::open(path)?;
+            let server = KvsServer::new(addr.to_string(), engine)?;
+            server.run()
+        }
+        EngineType::Sled(path) => {
+            let engine = SledKvsEngine::open(path)?;
+            let server = KvsServer::new(addr.to_string(), engine)?;
+            server.run()
+        }
+    }
 }

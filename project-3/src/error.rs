@@ -22,6 +22,10 @@ pub enum KvsError {
     /// Command line argument error
     #[fail(display = "Command line argument error")]
     CommandLineArgumentError,
+    /// Invalid storage engine type
+    /// or the current storage engine is mismatch the origin
+    #[fail(display = "Invalid storage engine type")]
+    InvalidStorageEngineType,
     /// Invalid server response
     #[fail(display = "Invalid server response")]
     InvalidServerResponse,
