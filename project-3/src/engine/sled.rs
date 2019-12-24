@@ -9,6 +9,11 @@ pub struct SledKvsEngine {
 }
 
 impl SledKvsEngine {
+    /// new SledKvsEngine with Db
+    pub fn new(db: Db) -> Self {
+        Self { db }
+    }
+
     /// Open and create SledKvsEngine
     pub fn open(path: PathBuf) -> Result<SledKvsEngine> {
         let db = Db::open(path).map_err(|_| KvsError::InternalError)?;
