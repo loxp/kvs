@@ -44,10 +44,10 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
     loop {
         let mut read_line = String::new();
         reader.read_line(&mut read_line)?;
-        let msg = codec::decode(read_line.trim().to_string())?;
+        let msg = codec::decode(read_line)?;
 
         if msg.len() <= 1 {
-            let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
+            let err_resp = format!("{}\n", KvsError::InvalidRequest);
             writer.write(err_resp.as_bytes())?;
             writer.flush();
             continue;
@@ -59,12 +59,12 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
                 let value = engine.lock().unwrap().get(key.to_string())?;
                 match value {
                     Some(v) => {
-                        let resp = format!("{:?}\n", v);
+                        let resp = format!("{}\n", v);
                         writer.write(resp.as_bytes())?;
                         writer.flush();
                     }
                     None => {
-                        let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
+                        let err_resp = format!("{}\n", KvsError::KeyNotFound);
                         writer.write(err_resp.as_bytes())?;
                         writer.flush();
                     }
@@ -77,13 +77,17 @@ pub fn handle_stream<K: KvsEngine>(stream: TcpStream, engine: Arc<Mutex<K>>) -> 
                     .lock()
                     .unwrap()
                     .set(key.to_string(), value.to_string())?;
+                writer.write("OK\n".as_bytes())?;
+                writer.flush()?;
             }
             "rm" => {
                 let key = msg.get(1).ok_or(KvsError::InvalidRequest)?;
                 engine.lock().unwrap().remove(key.to_string())?;
+                writer.write("OK\n".as_bytes())?;
+                writer.flush()?;
             }
             _ => {
-                let err_resp = format!("{:?}\n", KvsError::InvalidRequest);
+                let err_resp = format!("{}\n", KvsError::InvalidRequest);
                 writer.write(err_resp.as_bytes())?;
                 writer.flush();
             }

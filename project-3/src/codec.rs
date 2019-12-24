@@ -5,6 +5,7 @@ pub type Message = Vec<String>;
 
 /// Decoding a line into a message
 pub fn decode(line: String) -> Result<Message> {
+    let line = line.trim().to_string();
     let tokens = line
         .split(" ")
         .filter(|s| !s.is_empty())

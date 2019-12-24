@@ -29,9 +29,9 @@ impl<'a> KvsClient<'a> {
         match ret {
             Some(msg) => match msg.as_str() {
                 "OK" => Ok(()),
-                _ => Err(KvsError::InvalidServerResponse),
+                r => Err(KvsError::InvalidServerResponse),
             },
-            _ => Err(KvsError::InvalidServerResponse),
+            None => Err(KvsError::InvalidServerResponse),
         }
     }
 
@@ -47,20 +47,20 @@ impl<'a> KvsClient<'a> {
     /// If remove success, return Ok(()).
     /// Return Err(e) when error occurs.
     pub fn remove(&mut self, key: String) -> Result<()> {
-        let req = vec!["remove".to_string(), key];
+        let req = vec!["rm".to_string(), key];
         let ret = self.write_request_and_get_result(req)?;
         match ret {
             Some(msg) => match msg.as_str() {
                 "OK" => Ok(()),
-                _ => Err(KvsError::InvalidServerResponse),
+                r => Err(KvsError::InvalidServerResponse),
             },
-            _ => Err(KvsError::InvalidServerResponse),
+            None => Err(KvsError::InvalidServerResponse),
         }
     }
 
     fn write_request_and_get_result(&mut self, msg: Message) -> Result<Option<String>> {
-        let write_line = encode(msg);
-        self.writer.write_fmt(format_args!("{:?}\n", write_line))?;
+        let write_line = encode(msg)?;
+        self.writer.write(write_line.as_bytes())?;
         self.writer.flush()?;
         let mut read_line = String::new();
         let len = self.reader.read_line(&mut read_line)?;

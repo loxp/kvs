@@ -29,7 +29,7 @@ fn main() -> Result<()> {
         .get_matches();
 
     let addr = matches
-        .value_of("ADDR")
+        .value_of("addr")
         .ok_or(KvsError::CommandLineArgumentError)?;
 
     match matches.subcommand() {
@@ -44,10 +44,12 @@ fn main() -> Result<()> {
             let key = matches.value_of("KEY").expect("KEY argument missing");
             let stream = TcpStream::connect(addr.to_string())?;
             let mut client = KvsClient::new(&stream)?;
-            let ret = client.get(key.to_string());
+            let ret = client.get(key.to_string())?;
             match ret {
-                Ok(r) => println!("{:?}", r),
-                Err(e) => println!("{:?}", e),
+                Some(r) => {
+                    println!("{}", r);
+                }
+                None => println!("{}", KvsError::KeyNotFound),
             }
         }
         ("rm", Some(matches)) => {
